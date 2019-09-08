@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd">
+    
+  
+    <flow name="csvFlow">
+        <file:inbound-endpoint path="/home/saint/eclipse-works/eclipseNeon/task3/src/main/resources/input" responseTimeout="10000" doc:name="File">
+            <file:filename-regex-filter pattern="(.*).csv" caseSensitive="true"/>
+        </file:inbound-endpoint>
+        <dw:transform-message doc:name="Transform Message">
+         <dw:input-payload mimeType="application/csv">
+            <dw:reader-property name="separator" value=" |"/>
+            <dw:reader-property name="header" value="True"/>
+            </dw:input-payload>
+             <dw:set-payload><![CDATA[%dw 1.0
+%output text/json 
+		---
+		payload map ((payload01 , indexOfPayload01) -> {
+			"DATE": payload01."DATE", 
+			"employeeID": payload01."Employee ID",
+			"employeeLastNamanagerme": payload01."Employee Last Namanagerme",
+			"employeeFirstName": payload01."Employee First Name",
+			"reportID": payload01."Report ID",
+			"employeeDefaultCurrencyAlphaCode": payload01."Employee Default Currency Alpha Code",
+			"reportSubmitDate": payload01."Report Submit Date",
+			"reportProcessingPaymentDate": payload01."Report Processing Payment Date",
+			"reportName": payload01."Report Name",
+			"reportEntryExpenseTypeName": payload01."Report Entry Expense Type Name",
+			"reportEntryTransactionDate": payload01."Report Entry Transaction Date",
+			"reportEntryIsPersonalFlag": payload01."Report EntrAunt Description",
+			"journalPayerPaymentCodeName": payload01."Journal Payer Payment Code Name",
+			"journalPayeePaymentTypeName": payload01."Journal Payee Payment Type Name",
+			"journalAmount": payload01."Journal Amount",
+			"journalAccountCode": payload01."Journal Account Code",
+			"journalDebitOrCredit": payload01."Journal Debit Or Credit",
+			"paymentDemandCompanyCashAccountCode": payload01."Payment Demand Company Cash Account Code",
+			"paymentDemandCompanyLiabilityAccountCode": payload01."Payment Demand Company Liability Account Code",
+			"estimatedPaymentDate": payload01."Estimated Payment Date",
+			"Department": payload01."Department",
+			"Project": payload01."Project",
+			"Program": payload01."Program",
+			"Location": payload01."Location",
+			"reportCustom3": payload01."ReportCustom3"
+		})]]></dw:set-payload>
+        </dw:transform-message>
+        <logger level="DEBUG" doc:name="Logger" message="#[payload]"/>
+        <dw:transform-message doc:name="Transform Message">
+            <dw:set-payload><![CDATA[%dw 1.0
+  %output text/csv header=true, separator="|"
+ ---
+  payload 
+]]></dw:set-payload>
+        </dw:transform-message>
+        <logger message="#[payload]" level="DEBUG" doc:name="Logger"/>
+        <file:outbound-endpoint path="/home/saint/eclipse-works/eclipseNeon/task3/src/main/resources/output" responseTimeout="10000" doc:name="File"/>
+        <catch-exception-strategy doc:name="Exception_Strategy">
+            <logger level="INFO" doc:name="Logger"/>
+        </catch-exception-strategy>
+    </flow>
+
+</mule>

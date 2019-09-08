@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+ 
+  <http:listener-config name="HTTP_Listener_Configuration2" host="localhost" port="8081" doc:name="HTTPListener"/>
+	<flow name="task4Flow">
+        <http:listener config-ref="HTTP_Listener_Configuration2" path="/files" allowedMethods="GET" doc:name="HTTPListener">
+            <http:response-builder statusCode="200" />
+        </http:listener>
+        
+        <flow-ref name="csvtojson" doc:name="FlowCSV">
+        
+        </flow-ref>
+        <response>
+            <set-payload value="#[&quot;ab&quot;]" encoding="UTF-8" mimeType="application/json" doc:name="Set Payload"/>
+        </response>
+        
+         <logger message="#[payload]" level="DEBUG" doc:name="Logger"/> 
+       
+    </flow>
+    
+        <flow name="csvtojson">
+       	 <file:inbound-endpoint responseTimeout="10000" doc:name="File" path="src/main/app/resources/webinput">
+        		<file:filename-regex-filter pattern="(.*).csv" caseSensitive="true"/>
+        </file:inbound-endpoint>
+        
+        <logger message="#[payload.message]" level="DEBUG" doc:name="Logger"/>
+			     <enricher source="#[payload]" target="#[flowVars.json]" doc:name="Message Enricher">
+			            <dw:transform-message doc:name="Transform Message">
+			              <dw:input-payload mimeType="text/csv">
+			            <dw:reader-property name="separator" value="|"/>
+			            <dw:reader-property name="header" value="True"/>
+			            
+			            </dw:input-payload>
+					 <dw:set-payload><![CDATA[%dw 1.0
+%output application/json encoding="UTF-8" 
+---
+ payload]]></dw:set-payload>
+			            </dw:transform-message>
+			        </enricher>
+			     <logger message="#[payload]" level="DEBUG" doc:name="Logger"/> 
+        
+        </flow>
+    
+    </mule>
